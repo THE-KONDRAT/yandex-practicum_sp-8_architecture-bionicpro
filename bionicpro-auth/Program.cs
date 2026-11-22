@@ -168,4 +168,24 @@ app.MapGet("/api/reports", async (HttpContext context, SessionStore store, Keycl
 
 });
 
+app.MapGet("/api/reports/authorize", (HttpContext context, SessionStore store) =>
+{
+    if (!context.Request.Cookies.TryGetValue(sessionCookieName, out var sessionId))
+        return Results.Unauthorized();
+
+    var session = store.Get(sessionId);
+    if (session is null || !SessionStore.TryGetPreferredUsername(session.AccessToken, out var username))
+        return Results.Unauthorized();
+
+    var path = context.Request.Headers["X-Original-URI"].ToString().Split('?', 2)[0];
+    var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+    if (segments.Length < 3 || segments[0] != "reports")
+        return Results.StatusCode(StatusCodes.Status403Forbidden);
+
+    var fileOwner = Uri.UnescapeDataString(segments[1]);
+    return !string.Equals(fileOwner, username, StringComparison.OrdinalIgnoreCase)
+        ? Results.StatusCode(StatusCodes.Status403Forbidden)
+        : Results.Ok();
+});
+
 app.Run();

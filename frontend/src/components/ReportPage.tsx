@@ -67,7 +67,7 @@ const ReportPage: React.FC = () => {
       const { url, cached } = await response.json();
       setFromCache(cached);
 
-      const cdnResponse = await fetch(url);
+      const cdnResponse = await fetch(url, { credentials: 'include' });
       if (!cdnResponse.ok) throw new Error(`CDN вернул: ${cdnResponse.status}`);
       setReport(await cdnResponse.json());
     } catch (err) {

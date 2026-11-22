@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Caching.Memory;
@@ -66,5 +67,36 @@ public class SessionStore
     {
         var sessionId = Base64UrlEncoder.Encode(RandomNumberGenerator.GetBytes(32));
         return sessionId;
+    }
+    
+    internal static bool TryGetPreferredUsername(string accessToken, [NotNullWhen(true)]out string? userName)
+    {
+        try
+        {
+            var parts = accessToken.Split('.');
+            if (parts.Length < 2)
+            {
+                userName = null;
+                return false;
+            }
+            var padded = parts[1].Replace('-', '+').Replace('_', '/');
+            switch (padded.Length % 4) { case 2: padded += "=="; break; case 3: padded += "="; break; }
+            var json = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(padded));
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var result = doc.RootElement.TryGetProperty("preferred_username", out var el) ? el.GetString() : null;
+            if (result != null)
+            {
+                userName = result;
+                return true;
+            }
+
+            userName = null;
+            return false;
+        }
+        catch
+        {
+            userName = null;
+            return false;
+        }
     }
 }

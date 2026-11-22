@@ -256,7 +256,6 @@ services:
       GARAGE_DEFAULT_BUCKET: reports
     ports:
       - "3900:3900"   # S3 API
-      - "3902:3902"   # website endpoint для CDN
     volumes:
       - ./garage/garage.toml:/etc/garage.toml:ro
       - garage-meta:/var/lib/garage/meta
@@ -292,6 +291,8 @@ services:
     depends_on:
       garage-init:
         condition: service_completed_successfully
+      bionicpro-auth:
+        condition: service_started
 
 volumes:
   garage-meta:
