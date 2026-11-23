@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS reports.crm_clients_kafka
     full_name String,
     prosthesis_model String,
     prosthesis_type String,
-    device_id String
+    device_id String,
+    `__deleted` String
 )
     ENGINE = Kafka
     SETTINGS
@@ -38,7 +39,8 @@ CREATE TABLE IF NOT EXISTS reports.crm_clients
     full_name String,
     prosthesis_model String,
     prosthesis_type String,
-    device_id String
+    device_id String,
+    deleted UInt8 DEFAULT 0
 )
     ENGINE = ReplacingMergeTree
     ORDER BY client_id;
@@ -46,7 +48,8 @@ CREATE TABLE IF NOT EXISTS reports.crm_clients
 CREATE MATERIALIZED VIEW IF NOT EXISTS reports.crm_clients_mv
 TO reports.crm_clients
 AS
-SELECT client_id, username, full_name, prosthesis_model, prosthesis_type, device_id
+SELECT client_id, username, full_name, prosthesis_model, prosthesis_type, device_id,
+       if(`__deleted` = 'true', 1, 0) AS deleted
 FROM reports.crm_clients_kafka;
 
 -- Агрегаты
@@ -80,4 +83,5 @@ FROM reports.telemetry_daily AS t
      (
          SELECT client_id, username, prosthesis_model, prosthesis_type, device_id
          FROM reports.crm_clients FINAL
+         WHERE deleted = 0
      ) AS c ON c.device_id = t.device_id;

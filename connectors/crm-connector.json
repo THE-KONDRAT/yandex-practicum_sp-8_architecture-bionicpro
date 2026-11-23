@@ -16,7 +16,7 @@
   "value.converter.schemas.enable": "false",
   "transforms": "unwrap",
   "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
-  "transforms.unwrap.delete.handling.mode": "drop",
+  "transforms.unwrap.delete.handling.mode": "rewrite",
   "transforms.unwrap.drop.tombstones": "true",
   "snapshot.mode": "initial"
 }
